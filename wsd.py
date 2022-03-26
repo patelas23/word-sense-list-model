@@ -7,13 +7,18 @@
 # Usage: python3 wsd.py training.txt test.txt model.txt > answers.txt
 
 import sys
-import xml.etree.ElementTree as ET
 import pandas as pd
+import xml.etree.ElementTree as ET
+import re
 
 def parse_text(corpus_string):
-    return pd.read_json(corpus_string)
+    corpus_string = re.sub(r'<@>', ' ', corpus_string)
+    corpus_tree = ET.ElementTree(corpus_string)
+    print(corpus_tree)
 
 def learn_model():
+    # Extract each head and associate it with its sense
+    # Extract words surrounding head and count their overall frequency
     pass
 
 if __name__ == "__main__":
@@ -24,4 +29,5 @@ if __name__ == "__main__":
     with open(training_file) as file:
         training_corpus_string = file.read()
         
-    print(parse_text(training_corpus_string))
+    parse_text(training_corpus_string)
+        
