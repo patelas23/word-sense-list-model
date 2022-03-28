@@ -3,7 +3,9 @@
 # Instructor: Bridgette Mckinnes
 
 # A Python script which implements a Decision List classifier to 
-#   perform word-sense disambiguation
+#   perform word-sense disambiguation on given text. 
+# The script will be tested against training files disambiguating
+#   the term 'line' 
 # Usage: python3 wsd.py training.txt test.txt model.txt > answers.txt
 from html.parser import HTMLParser
 
@@ -30,9 +32,18 @@ def learn_model():
     # Extract each head and associate it with its sense
     sense_data = ""
     current_head = ""
-    
+        
+    # Create dictionary of each word and its raw count 
     for word in sense_data:
         pass
+    
+    # Calculate log-likeluhood for each context word
+    
+    # Associate each head with either thing 
+
+    # Sort each head into its corresponding sense 
+    # Add each context word to the head structure
+    # Calculate probabilities for each context word 
     
     # Extract words surrounding head and count their overall frequency
 
