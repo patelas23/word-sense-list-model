@@ -8,10 +8,11 @@
 #   the term 'line' 
 # Usage: python3 wsd.py training.txt test.txt model.txt > answers.txt
 from html.parser import HTMLParser
+from signal import default_int_handler
 
 import sys
+from typing import DefaultDict
 import pandas as pd
-import xml.etree.ElementTree as ET
 import re
 
 # Helper class for parsing input text
@@ -19,6 +20,26 @@ def parse_text(corpus_string):
     sense_tagger = re.compile(r'(senseid=")(\S+)("/>)')
     head_tagger = re.compile(r'(<head>)(\S+)(</head>)')
     context_tagger = re.compile(r'(<context>\n)(.*)(\n</context>)')
+    
+    tag_cleaner = re.compile(r'<\?s>')
+    
+    # Remove non-context tags and words
+    corpus_string = tag_cleaner.sub(" ", corpus_string)
+    corpus_string = head_tagger.sub(" ", corpus_string)
+    
+    # Create dictionary of phone sense words
+    phone_senser = DefaultDict()
+    # Create dictionary of product sense words
+    product_senser = DefaultDict()
+    
+    # Extract contextual words 
+    context_lines = context_tagger.findall(corpus_string)
+    
+    # Extract sense data per line 
+    sense_lines = sense_tagger.findall(corpus_string)
+    
+    
+    
     # Extract each line
         # Extract each sense 
         # Extract the head, 
@@ -28,14 +49,26 @@ def parse_text(corpus_string):
 
 # Create sense model using separated text
 # 
-def learn_model():
+def learn_model(prod_sense, phone_sense):
     # Extract each head and associate it with its sense
     sense_data = ""
     current_head = ""
+
+    # Associate each context word with its sense 
+    phone_dict = ""
+    product_dict = ""
+    
+    # Get count of each sense
+    
+    
         
     # Create dictionary of each word and its raw count 
     for word in sense_data:
         pass
+    
+    # for sense, word in context, sense:
+    #   
+    
     
     # Calculate log-likeluhood for each context word
     
@@ -50,6 +83,12 @@ def learn_model():
 # Read input file, extract each head and disambiguate it
 # For each <head> word, generate log probability 
 def apply_model():
+    # for word in context
+    #  if word in phone_sense:
+        #   calculate probability
+    #  if word in product_sense:
+        #  calculate probability
+    # compare probs of each sense
     pass
 
 
