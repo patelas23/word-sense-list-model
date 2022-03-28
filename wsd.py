@@ -24,10 +24,17 @@ def parse_text(corpus_string):
     # Produce log probabilities
     pass
 
+# Create sense model using separated text
+# 
 def learn_model():
     # Extract each head and associate it with its sense
+    sense_data = ""
+    current_head = ""
+    
+    for word in sense_data:
+        pass
+    
     # Extract words surrounding head and count their overall frequency
-    pass
 
 # Read input file, extract each head and disambiguate it
 # For each <head> word, generate log probability 
