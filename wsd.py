@@ -16,9 +16,9 @@ import re
 
 # Helper function for generating counts of each unique word
 # Returns dictionary of form {word: count}
-def count_words(corpus_line):
-    corpus_dict = DefaultDict(int)
-    for word in corpus_line:
+def count_words(corpus_line, corpus_dict):
+    line_data = corpus_line.split()
+    for word in line_data:
         if word not in corpus_dict:
             corpus_dict[word] = 1
         else:
@@ -39,41 +39,40 @@ def parse_text(corpus_string):
     # corpus_string = head_tagger.sub(" ", corpus_string)
     
     # Create dictionary of phone sense words
-    phone_senser = DefaultDict()
+    phone_senser = DefaultDict(int)
+    phone_count = 0
     # Create dictionary of product sense words
-    product_senser = DefaultDict()
-    
+    product_senser = DefaultDict(int)
+    product_count = 0
     # Extract sense data per line 
     sense_lines = sense_tagger.findall(corpus_string)
     sense_words = []
     for tup in sense_lines:
         sense_words.append(tup[1])
         
-    # Extract each line of context 
-    context_lines = context_tagger.findall(corpus_string)
-    for tup in context_lines:
-        # Extract each word from context and sort according to word sense
-        for word in tup[1]:
-            pass
+    # Remove <head> words from context data
+    corpus_string = head_tagger.sub(" ", corpus_string)
         
+    context_lines = []
+    # Extract each line of context 
+    context_match = context_tagger.findall(corpus_string)
+    for tup in context_match:
+        context_lines.append(tup[1])
+            
+    # Iterate over sense data and context lines to 
+    #  create each 'bag of words'
+    for i in range(len(sense_lines)):
+        if sense_words[i] == "product":
+            product_count += 1
+            count_words(context_lines[i], product_senser)
+        elif sense_words[i] == "phone":
+            phone_count += 1
+            count_words(context_lines[i], phone_senser)
             
     
-    # Extract contextual words 
     
-    
-    
-    
-    
-    # Extract each line
-        # Extract each sense 
-        # Extract the head, 
-        # Extract each surrounding word and add it to count
-    # Produce log probabilities
-    pass
 
-
-
-# Create sense model using separated text
+# Generate sense probabilities for each word and 
 # 
 def learn_model(prod_sense, phone_sense):
     # Extract each head and associate it with its sense
