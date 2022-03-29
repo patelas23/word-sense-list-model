@@ -9,10 +9,14 @@
 # Usage: python3 wsd.py training.txt test.txt model.txt > answers.txt
 
 import sys
-from typing import DefaultDict
+from collections import defaultdict
+from numpy import double
 import pandas as pd
 import re
 
+sense_tagger = re.compile(r'(senseid=")(.*)("/>)')
+head_tagger = re.compile(r'(<head>)(\S+)(</head>)')
+context_tagger = re.compile(r'(<context>\n)(.*)(\n</context>)')
 
 # Helper function for generating counts of each unique word
 # Returns dictionary of form {word: count}
@@ -27,10 +31,8 @@ def count_words(corpus_line, corpus_dict):
     return corpus_dict
 
 # Helper class for parsing input text
-def parse_text(corpus_string):
-    sense_tagger = re.compile(r'(senseid=")(.*)("/>)')
-    head_tagger = re.compile(r'(<head>)(\S+)(</head>)')
-    context_tagger = re.compile(r'(<context>\n)(.*)(\n</context>)')
+def parse_text(corpus_string, model_file):
+    
     
     tag_cleaner = re.compile(r'<s>|</s>|<p>|<@>|</p>')
     
@@ -39,10 +41,10 @@ def parse_text(corpus_string):
     # corpus_string = head_tagger.sub(" ", corpus_string)
     
     # Create dictionary of phone sense words
-    phone_senser = DefaultDict(int)
+    phone_senser = defaultdict(int)
     phone_count = 0
     # Create dictionary of product sense words
-    product_senser = DefaultDict(int)
+    product_senser = defaultdict(int)
     product_count = 0
     # Extract sense data per line 
     sense_lines = sense_tagger.findall(corpus_string)
@@ -68,46 +70,44 @@ def parse_text(corpus_string):
         elif sense_words[i] == "phone":
             phone_count += 1
             count_words(context_lines[i], phone_senser)
-            
-    
-    
+        
+    learn_model(product_senser, product_count, phone_senser, phone_count, model_file)
+
 
 # Generate sense probabilities for each word and 
 # 
-def learn_model(prod_sense, phone_sense):
-    # Extract each head and associate it with its sense
-    sense_data = ""
-    current_head = ""
+def learn_model(prod_sense, prod_count, phone_sense, phone_count, model_file):
 
-    # Associate each context word with its sense 
-    phone_dict = ""
-    product_dict = ""
+    # Associate each context word with its sense
     
-    # Get count of each sense
+    phone_prob = defaultdict(double)
+    product_prob = defaultdict(double)
     
-    
+    # Calculate log-likelihood for each context word
+    #  and record in model file
+    with open(model_file) as file:
+        for word in prod_sense:
+            product_prob[word] = prod_sense[word]/prod_count
+            file.write(word + ": " + product_prob[word] + "\n")
         
-    # Create dictionary of each word and its raw count 
-    for word in sense_data:
-        pass
+        for word in phone_sense:
+            phone_prob[word] = phone_sense[word]/phone_count
+            file.write(word + ": " + phone_prob[word] + "\n")
     
-    # for sense, word in context, sense:
-    #   
-    
-    
-    # Calculate log-likeluhood for each context word
-    
-    # Associate each head with either thing 
 
-    # Sort each head into its corresponding sense 
-    # Add each context word to the head structure
+    
+    
     # Calculate probabilities for each context word 
     
     # Extract words surrounding head and count their overall frequency
 
+
+def parse_test(test_string):
+    pass
+
 # Read input file, extract each head and disambiguate it
 # For each <head> word, generate log probability 
-def apply_model():
+def apply_model(product_log, phone_log, test_string):
     # for word in context
     #  if word in phone_sense:
         #   calculate probability
@@ -120,12 +120,20 @@ def apply_model():
 if __name__ == "__main__":
     print('Welcome to wsd.py!')
     training_file = sys.argv[1]
+    test_file = sys.argv[2]
+    model_file = sys.argv[3]
     training_corpus_string = ""
+    test_corpus_string = ""
     
     with open(training_file) as file:
         training_corpus_string = file.read()
     
     parse_text(training_corpus_string)
+    
+    with open(test_file) as file:
+        test_corpus_string = file.read()
+    
+    parse_test()
     
     # Attempt to create html parser 
     # parser = WordSenseParser()
