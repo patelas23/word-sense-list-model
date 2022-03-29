@@ -7,36 +7,60 @@
 # The script will be tested against training files disambiguating
 #   the term 'line' 
 # Usage: python3 wsd.py training.txt test.txt model.txt > answers.txt
-from html.parser import HTMLParser
-from signal import default_int_handler
 
 import sys
 from typing import DefaultDict
 import pandas as pd
 import re
 
+
+# Helper function for generating counts of each unique word
+# Returns dictionary of form {word: count}
+def count_words(corpus_line):
+    corpus_dict = DefaultDict(int)
+    for word in corpus_line:
+        if word not in corpus_dict:
+            corpus_dict[word] = 1
+        else:
+            corpus_dict[word] += 1
+            
+    return corpus_dict
+
 # Helper class for parsing input text
 def parse_text(corpus_string):
-    sense_tagger = re.compile(r'(senseid=")(\S+)("/>)')
+    sense_tagger = re.compile(r'(senseid=")(.*)("/>)')
     head_tagger = re.compile(r'(<head>)(\S+)(</head>)')
     context_tagger = re.compile(r'(<context>\n)(.*)(\n</context>)')
     
-    tag_cleaner = re.compile(r'<\?s>')
+    tag_cleaner = re.compile(r'<s>|</s>|<p>|<@>|</p>')
     
     # Remove non-context tags and words
     corpus_string = tag_cleaner.sub(" ", corpus_string)
-    corpus_string = head_tagger.sub(" ", corpus_string)
+    # corpus_string = head_tagger.sub(" ", corpus_string)
     
     # Create dictionary of phone sense words
     phone_senser = DefaultDict()
     # Create dictionary of product sense words
     product_senser = DefaultDict()
     
-    # Extract contextual words 
-    context_lines = context_tagger.findall(corpus_string)
-    
     # Extract sense data per line 
     sense_lines = sense_tagger.findall(corpus_string)
+    sense_words = []
+    for tup in sense_lines:
+        sense_words.append(tup[1])
+        
+    # Extract each line of context 
+    context_lines = context_tagger.findall(corpus_string)
+    for tup in context_lines:
+        # Extract each word from context and sort according to word sense
+        for word in tup[1]:
+            pass
+        
+            
+    
+    # Extract contextual words 
+    
+    
     
     
     
@@ -46,6 +70,8 @@ def parse_text(corpus_string):
         # Extract each surrounding word and add it to count
     # Produce log probabilities
     pass
+
+
 
 # Create sense model using separated text
 # 
