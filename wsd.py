@@ -8,6 +8,7 @@
 #   the term 'line' 
 # Usage: python3 wsd.py training.txt test.txt model.txt > answers.txt
 
+import math
 import sys
 from collections import defaultdict
 from numpy import double
@@ -17,6 +18,11 @@ import re
 sense_tagger = re.compile(r'(senseid=")(.*)("/>)')
 head_tagger = re.compile(r'(<head>)(\S+)(</head>)')
 context_tagger = re.compile(r'(<context>\n)(.*)(\n</context>)')
+
+# Object containing relevant information for each given feature
+class MyFeature():
+    def __init__(self, word, sense, discriminator) -> None:
+        pass
 
 # Helper function for generating counts of each unique word
 # Returns dictionary of form {word: count}
@@ -32,8 +38,7 @@ def count_words(corpus_line, corpus_dict):
 
 # Helper class for parsing input text
 def parse_text(corpus_string, model_file):
-    
-    
+        
     tag_cleaner = re.compile(r'<s>|</s>|<p>|<@>|</p>')
     
     # Remove non-context tags and words
@@ -87,15 +92,12 @@ def learn_model(prod_sense, prod_count, phone_sense, phone_count, model_file):
     #  and record in model file
     with open(model_file) as file:
         for word in prod_sense:
-            product_prob[word] = prod_sense[word]/prod_count
+            product_prob[word] = math.log(prod_sense[word])/math.log(prod_count)
             file.write(word + ": " + product_prob[word] + "\n")
         
         for word in phone_sense:
-            phone_prob[word] = phone_sense[word]/phone_count
+            phone_prob[word] = math.log(phone_sense[word])/math.log(phone_count)
             file.write(word + ": " + phone_prob[word] + "\n")
-    
-
-    
     
     # Calculate probabilities for each context word 
     
@@ -108,13 +110,31 @@ def parse_test(test_string):
 # Read input file, extract each head and disambiguate it
 # For each <head> word, generate log probability 
 def apply_model(product_log, phone_log, test_string):
-    # for word in context
-    #  if word in phone_sense:
-        #   calculate probability
-    #  if word in product_sense:
-        #  calculate probability
-    # compare probs of each sense
-    pass
+    sense_output = []
+    sense_count = 0
+    
+    phone_vector = 0
+    product_vector = 0
+    
+    # Compare probability of each context word 
+    for line in test_string:
+        word_list = line.split()
+        for word in word_list:
+            if word in product_log:
+                if word in phone_log:
+                    if(product_log[word] < phone_log[word]):
+                        phone_vector += 1
+                    else:
+                        product_vector += 1
+            elif word in phone_log:
+                phone_vector += 1
+        if(phone_vector > product_vector):
+            sense_output[sense_count] = "phone"
+            sense_count += 1
+        else:
+            sense_output[sense_count] = "product"
+            sense_count += 1
+
 
 
 if __name__ == "__main__":
