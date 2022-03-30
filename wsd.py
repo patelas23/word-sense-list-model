@@ -25,7 +25,11 @@ class MyFeature():
         pass
 
 # Helper function for generating counts of each unique word
-# Returns dictionary of form {word: count}
+#  from a sentence-length string
+# IN: 
+#   corpus_line: single line of text
+#   corpus_dict: dictionary to be updated
+# OUT: dictionary of form {word: count}
 def count_words(corpus_line, corpus_dict):
     line_data = corpus_line.split()
     for word in line_data:
@@ -35,6 +39,23 @@ def count_words(corpus_line, corpus_dict):
             corpus_dict[word] += 1
             
     return corpus_dict
+
+# Helper function for removing extraneous data from input texts
+# In: raw string from file
+# Out: list of lines
+def clean_text(corpus_string):
+    cleaned_corpus = re.sub(r'<s>|</s>|<p>|<@>|</p>', " ", corpus_string)
+
+def get_sense(corpus_string):
+    pass
+
+def get_context(corpus_string):
+    context_lines = []
+    # Extract each line of context 
+    context_match = context_tagger.findall(corpus_string)
+    for tup in context_match:
+        context_lines.append(tup[1])
+    return context_lines
 
 # Helper class for parsing input text
 def parse_text(corpus_string, model_file):
@@ -77,6 +98,11 @@ def parse_text(corpus_string, model_file):
             count_words(context_lines[i], phone_senser)
         
     learn_model(product_senser, product_count, phone_senser, phone_count, model_file)
+    
+
+# IN: one dictionary per sense, containing each unique word and its count
+def train_model():
+    model_dict = defaultdict(double)
 
 
 # Generate sense probabilities for each word and 
