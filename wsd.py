@@ -46,6 +46,7 @@ def count_words(corpus_line, corpus_list):
 # Out: list of lines
 def clean_text(corpus_string):
     cleaned_corpus = re.sub(r'<s>|</s>|<p>|<@>|</p>', " ", corpus_string)
+    return cleaned_corpus
 
 def get_sense(corpus_string):
     pass
@@ -57,48 +58,6 @@ def get_context(corpus_string):
     for tup in context_match:
         context_lines.append(tup[1])
     return context_lines
-
-# Helper class for parsing input text
-def parse_text(corpus_string, model_file):
-        
-    tag_cleaner = re.compile(r'<s>|</s>|<p>|<@>|</p>')
-    
-    # Remove non-context tags and words
-    corpus_string = tag_cleaner.sub(" ", corpus_string)
-    # corpus_string = head_tagger.sub(" ", corpus_string)
-    
-    # Create dictionary of phone sense words
-    phone_senser = defaultdict(int)
-    phone_count = 0
-    # Create dictionary of product sense words
-    product_senser = defaultdict(int)
-    product_count = 0
-    # Extract sense data per line 
-    sense_lines = sense_tagger.findall(corpus_string)
-    sense_words = []
-    for tup in sense_lines:
-        sense_words.append(tup[1])
-        
-    # Remove <head> words from context data
-    corpus_string = head_tagger.sub(" ", corpus_string)
-        
-    context_lines = []
-    # Extract each line of context 
-    context_match = context_tagger.findall(corpus_string)
-    for tup in context_match:
-        context_lines.append(tup[1])
-            
-    # Iterate over sense data and context lines to 
-    #  create each 'bag of words'
-    for i in range(len(sense_lines)):
-        if sense_words[i] == "product":
-            product_count += 1
-            count_words_sense(context_lines[i], product_senser)
-        elif sense_words[i] == "phone":
-            phone_count += 1
-            count_words_sense(context_lines[i], phone_senser)
-        
-    learn_model(product_senser, product_count, phone_senser, phone_count, model_file)
     
 
 # IN: one dictionary per sense, containing each unique word and its count
@@ -163,42 +122,23 @@ def train_model(corpus_string, model_file):
             phone_likelihood = 1.0/phone_count
            
         composite_log = math.log(product_likelihood/phone_likelihood) 
-        log_dict[feature] = composite_log
+        log_dict[feature] = math.abs(composite_log)
         if composite_log > 0:
             sense_dict[feature] = "phone"
         else:
             sense_dict[feature] = "product"
     
-            
-    sorted_model_dict = sorted(model_dict, key=math.abs(model_dict.items()))
-
-
-def test_model():
-    pass
-
-# Generate sense probabilities for each word and 
-# 
-def learn_model(prod_sense, prod_count, phone_sense, phone_count, model_file):
-
-    # Associate each context word with its sense
+    # sort log dictionary by descending order of discrimination
+    sorted_logs = dict(sorted(log_dict.items(), key= lambda x: x[1], reverse=True))
     
-    phone_prob = defaultdict(double)
-    product_prob = defaultdict(double)
-    
-    # Calculate log-likelihood for each context word
-    #  and record in model file
+    # write model to file
     with open(model_file) as file:
-        for word in prod_sense:
-            product_prob[word] = math.log(prod_sense[word])/math.log(prod_count)
-            file.write(word + ": " + product_prob[word] + "\n")
-        
-        for word in phone_sense:
-            phone_prob[word] = math.log(phone_sense[word])/math.log(phone_count)
-            file.write(word + ": " + phone_prob[word] + "\n")
-    
-    # Calculate probabilities for each context word 
-    
-    # Extract words surrounding head and count their overall frequency
+        for feature in sorted_logs:
+            file.write(feature, ": ", log_dict[feature], ", ", sense_dict[feature])
+
+# Function to execute analysis on text file using trained model
+def test_model(log_dict, sense_dict, test_file):
+    pass
 
 # Read input file, extract each head and disambiguate it
 # For each <head> word, generate log probability 
@@ -241,14 +181,6 @@ if __name__ == "__main__":
     with open(training_file) as file:
         training_corpus_string = file.read()
     
-    parse_text(training_corpus_string)
     
     with open(test_file) as file:
         test_corpus_string = file.read()
-    
-    
-    # Attempt to create html parser 
-    # parser = WordSenseParser()
-    # parser.feed(training_corpus_string)
-        
-        
