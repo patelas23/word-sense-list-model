@@ -8,6 +8,7 @@
 #   the term 'line' 
 # Usage: python3 wsd.py training.txt test.txt model.txt > answers.txt
 
+from cmath import log
 import math
 from multiprocessing import context
 import sys
@@ -48,9 +49,6 @@ def clean_text(corpus_string):
     cleaned_corpus = re.sub(r'<s>|</s>|<p>|<@>|</p>', " ", corpus_string)
     return cleaned_corpus
 
-def get_sense(corpus_string):
-    pass
-
 def get_context(corpus_string):
     context_lines = []
     # Extract each line of context 
@@ -58,18 +56,16 @@ def get_context(corpus_string):
     for tup in context_match:
         context_lines.append(tup[1])
     return context_lines
-    
 
 # IN: one dictionary per sense, containing each unique word and its count
-def train_model(corpus_string, model_file):
-    #  dictionary containing each word, its sense, and count
-    model_dict = defaultdict(double)
-    
+def train_model(corpus_string, model_file): 
     # dictionary containing word with determined sense and discriminator score
-    log_dict = defaultdict(double)
+    log_dict = dict(float)
     
     # dictionary containing all unique words
     feature_list = list()
+    
+    model_dict = defaultdict(float)
     
     # separate dictionaries for each sense
     phone_sense = defaultdict(int)
@@ -135,40 +131,25 @@ def train_model(corpus_string, model_file):
     with open(model_file) as file:
         for feature in sorted_logs:
             file.write(feature, ": ", log_dict[feature], ", ", sense_dict[feature])
+            
+            
+    
 
 # Function to execute analysis on text file using trained model
-def test_model(log_dict, sense_dict, test_file):
-    pass
-
-# Read input file, extract each head and disambiguate it
-# For each <head> word, generate log probability 
-def apply_model(product_log, phone_log, test_string):
-    sense_output = []
-    sense_count = 0
-    
-    phone_vector = 0
-    product_vector = 0
-    
-    # Compare probability of each context word 
-    for line in test_string:
-        word_list = line.split()
-        for word in word_list:
-            if word in product_log:
-                if word in phone_log:
-                    if(product_log[word] < phone_log[word]):
-                        phone_vector += 1
-                    else:
-                        product_vector += 1
-            elif word in phone_log:
-                phone_vector += 1
-        if(phone_vector > product_vector):
-            sense_output[sense_count] = "phone"
-            sense_count += 1
-        else:
-            sense_output[sense_count] = "product"
-            sense_count += 1
-
-
+def test_model(log_dict, sense_dict, test_string):
+    clean_test = clean_text(test_string)
+    test_lines = get_context(clean_test)
+                    
+    for i in range(len(test_lines)):
+        line_list = test_lines[i].split()
+        for line_word in line_list:
+            for log_word in log_dict:
+                if line_word == log_word:
+                    sys.stdout.write("senseid= ", sense_dict[log_word])
+                    break
+                else:
+                    continue
+            break
 
 if __name__ == "__main__":
     print('Welcome to wsd.py!')
