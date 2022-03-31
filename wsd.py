@@ -9,6 +9,7 @@
 # Usage: python3 wsd.py training.txt test.txt model.txt > answers.txt
 
 import math
+from multiprocessing import context
 import sys
 from collections import defaultdict
 from numpy import double
@@ -19,26 +20,26 @@ sense_tagger = re.compile(r'(senseid=")(.*)("/>)')
 head_tagger = re.compile(r'(<head>)(\S+)(</head>)')
 context_tagger = re.compile(r'(<context>\n)(.*)(\n</context>)')
 
-# Object containing relevant information for each given feature
-class MyFeature():
-    def __init__(self, word, sense, discriminator) -> None:
-        pass
-
 # Helper function for generating counts of each unique word
 #  from a sentence-length string
 # IN: 
 #   corpus_line: single line of text
 #   corpus_dict: dictionary to be updated
-# OUT: dictionary of form {word: count}
-def count_words(corpus_line, corpus_dict):
+# OUT: dictionary of form {word, sense: count}
+def count_words_sense(corpus_line, corpus_dict):
     line_data = corpus_line.split()
     for word in line_data:
         if word not in corpus_dict:
-            corpus_dict[word] = 1
+            corpus_dict[word] = 1.0
         else:
-            corpus_dict[word] += 1
-            
+            corpus_dict[word] += 1.0
     return corpus_dict
+
+def count_words(corpus_line, corpus_list):
+    line_data = corpus_line.split()
+    for word in line_data:
+        if word not in corpus_list:
+            corpus_list.append(word)
 
 # Helper function for removing extraneous data from input texts
 # In: raw string from file
@@ -92,18 +93,88 @@ def parse_text(corpus_string, model_file):
     for i in range(len(sense_lines)):
         if sense_words[i] == "product":
             product_count += 1
-            count_words(context_lines[i], product_senser)
+            count_words_sense(context_lines[i], product_senser)
         elif sense_words[i] == "phone":
             phone_count += 1
-            count_words(context_lines[i], phone_senser)
+            count_words_sense(context_lines[i], phone_senser)
         
     learn_model(product_senser, product_count, phone_senser, phone_count, model_file)
     
 
 # IN: one dictionary per sense, containing each unique word and its count
-def train_model():
+def train_model(corpus_string, model_file):
+    #  dictionary containing each word, its sense, and count
     model_dict = defaultdict(double)
+    
+    # dictionary containing word with determined sense and discriminator score
+    log_dict = defaultdict(double)
+    
+    # dictionary containing all unique words
+    feature_list = list()
+    
+    # separate dictionaries for each sense
+    phone_sense = defaultdict(int)
+    product_sense = defaultdict(int)
+    
+    # dictionary containing each word and its determined sense
+    sense_dict = dict()
+    
+    # Total counts for each sense
+    product_count = 0.0
+    phone_count = 0.0
+    
+    # Create a list for sense and context for each line
+    sense_list = []
+    context_list = []
+    
+    # Pull each sense word
+    sense_matches = sense_tagger.findall(corpus_string)
+    for tup in sense_matches:
+        sense_list.append(tup[1])
+    # Remove <head>s from context
+    context_string = head_tagger.sub(" ", corpus_string)
+    # Split corpus along each <context> line
+    context_matches = context_tagger.findall(context_string)
+    for tup in context_matches:
+        context_list.append(tup[1])
+        
+    # Generate counts for each word for each given sense
+    for i in range(len(sense_list)):
+        # count_words_sense(context_list[i], model_dict, sense_list[i])
+        if sense_list[i] == "product":
+            product_count += 1.0
+            count_words_sense(context_list[i], product_sense)
+        elif sense_list[i] == "phone":
+            phone_count += 1.0
+            count_words_sense(context_list[i], phone_sense)
+        count_words(context_list[i], feature_list)
+        
+    # Calculate log-likelihood of each word and assign it a sense 
+    for feature in feature_list:
+        if feature in product_sense:
+            product_likelihood = product_sense[feature]/product_count
+        else:
+        # if feature is only in phone sense 
+            product_likelihood = 1.0/product_count
+        if feature in phone_sense:
+            phone_likelihood = phone_sense[feature]/phone_count
+        else:
+            # if feature is only in product sense
+            phone_likelihood = 1.0/phone_count
+           
+        composite_log = math.log(product_likelihood/phone_likelihood) 
+        log_dict[feature] = composite_log
+        if composite_log > 0:
+            sense_dict[feature] = "phone"
+        else:
+            sense_dict[feature] = "product"
+    
+            
+    sorted_model_dict = sorted(model_dict, key=math.abs(model_dict.items()))
 
+
+def test_model():
+    pass
 
 # Generate sense probabilities for each word and 
 # 
@@ -128,10 +199,6 @@ def learn_model(prod_sense, prod_count, phone_sense, phone_count, model_file):
     # Calculate probabilities for each context word 
     
     # Extract words surrounding head and count their overall frequency
-
-
-def parse_test(test_string):
-    pass
 
 # Read input file, extract each head and disambiguate it
 # For each <head> word, generate log probability 
@@ -179,7 +246,6 @@ if __name__ == "__main__":
     with open(test_file) as file:
         test_corpus_string = file.read()
     
-    parse_test()
     
     # Attempt to create html parser 
     # parser = WordSenseParser()
