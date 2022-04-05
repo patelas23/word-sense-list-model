@@ -46,7 +46,7 @@ def count_words(corpus_line, corpus_list):
 # In: raw string from file
 # Out: list of lines
 def clean_text(corpus_string):
-    cleaned_corpus = re.sub(r'<s>|</s>|<p>|<@>|</p>', " ", corpus_string)
+    cleaned_corpus = re.sub(r'(<head>\S+</head>)|<s>|</s>|<p>|<@>|</p>', " ", corpus_string)
     return cleaned_corpus
 
 def get_context(corpus_string):
@@ -165,3 +165,5 @@ if __name__ == "__main__":
     
     with open(test_file) as file:
         test_corpus_string = file.read()
+        
+    
