@@ -9,7 +9,8 @@
 #       - text file containing algorithm output
 #   OUT:
 #       - Overall accuracy with confusion matrix
-
+import re
+from socket import getservbyname
 import sys
 import pandas as pd
 from sklearn import metrics
@@ -17,13 +18,15 @@ from sklearn import metrics
 def clean_text():
     pass
 
+# Return list of sense words
+def get_sense(input_string):
+    return re.findall(r'senseid="(\S+)"', input_string)
+
 def confusion_stats(actual: list, predicted: list):
     actual_series = pd.Series(actual, name="Actual")
     predicted_series = pd.Series(predicted, name="Predicted")
     sys.stdout.write("Accuracy Score: " + str(metrics.accuracy_score(actual_series, predicted_series, "\n")))
     sys.stdout.write("Confusion Matrix\n" + str(pd.crosstab(actual_series, predicted_series)))
-def regular_exp_parser():
-    pass
 
 if __name__ == '__main__':
     print("Welcome to scorer.py!")
@@ -42,5 +45,9 @@ if __name__ == '__main__':
         file_string = file.read()
         answer_key_string = clean_text(file_string)
     
+    my_answer_sense = get_sense(my_answer_string)
+    answer_key_sense = get_sense(answer_key_string)
+    
+    confusion_stats(actual=answer_key_sense, predicted=my_answer_sense)
 
 
