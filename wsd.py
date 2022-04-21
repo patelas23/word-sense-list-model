@@ -61,27 +61,27 @@ def get_context(corpus_string):
 def train_model(corpus_string, model_file): 
     # dictionary containing word with determined sense and discriminator score
     log_dict = dict(float)
-    
+
     # dictionary containing all unique words
     feature_list = list()
-    
+
     model_dict = defaultdict(float)
-    
+
     # separate dictionaries for each sense
     phone_sense = defaultdict(int)
     product_sense = defaultdict(int)
-    
+
     # dictionary containing each word and its determined sense
     sense_dict = dict()
-    
+
     # Total counts for each sense
     product_count = 0.0
     phone_count = 0.0
-    
+
     # Create a list for sense and context for each line
     sense_list = []
     context_list = []
-    
+
     # Pull each sense word
     sense_matches = sense_tagger.findall(corpus_string)
     for tup in sense_matches:
@@ -92,7 +92,7 @@ def train_model(corpus_string, model_file):
     context_matches = context_tagger.findall(context_string)
     for tup in context_matches:
         context_list.append(tup[1])
-        
+
     # Generate counts for each word for each given sense
     for i in range(len(sense_list)):
         # count_words_sense(context_list[i], model_dict, sense_list[i])
@@ -103,7 +103,7 @@ def train_model(corpus_string, model_file):
             phone_count += 1.0
             count_words_sense(context_list[i], phone_sense)
         count_words(context_list[i], feature_list)
-        
+
     # Calculate log-likelihood of each word and assign it a sense 
     for feature in feature_list:
         if feature in product_sense:
@@ -116,30 +116,30 @@ def train_model(corpus_string, model_file):
         else:
             # if feature is only in product sense
             phone_likelihood = 1.0/phone_count
-           
+
         composite_log = math.log(product_likelihood/phone_likelihood) 
         log_dict[feature] = math.abs(composite_log)
         if composite_log > 0:
             sense_dict[feature] = "phone"
         else:
             sense_dict[feature] = "product"
-    
+
     # sort log dictionary by descending order of discrimination
     sorted_logs = dict(sorted(log_dict.items(), key= lambda x: x[1], reverse=True))
-    
+
     # write model to file
     with open(model_file) as file:
         for feature in sorted_logs:
             file.write(feature, ": ", log_dict[feature], ", ", sense_dict[feature])
-            
-            
-    
+
+
+
 
 # Function to execute analysis on text file using trained model
 def test_model(log_dict, sense_dict, test_string):
     clean_test = clean_text(test_string)
     test_lines = get_context(clean_test)
-                    
+
     for i in range(len(test_lines)):
         line_list = test_lines[i].split()
         for line_word in line_list:
@@ -158,12 +158,11 @@ if __name__ == "__main__":
     model_file = sys.argv[3]
     training_corpus_string = ""
     test_corpus_string = ""
-    
+
     with open(training_file) as file:
         training_corpus_string = file.read()
-    
-    
+
+
     with open(test_file) as file:
         test_corpus_string = file.read()
-        
-    
+
