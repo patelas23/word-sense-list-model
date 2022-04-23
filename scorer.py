@@ -2,15 +2,14 @@
 # Course: Natural Language Processing
 #   CMSC-416-001-SP2022
 #   Instructor: Dr. Bridget McInnes
-# 
-# Helper program for grading output of algorithm against 
-#   a supplied key. 
-#   IN: my_answers.txt 
+#
+# Helper program for grading output of algorithm against
+#   a supplied key.
+#   IN: my_answers.txt
 #       - text file containing algorithm output
 #   OUT:
 #       - Overall accuracy with confusion matrix
 import re
-from socket import getservbyname
 import sys
 import pandas as pd
 from sklearn import metrics
@@ -32,22 +31,22 @@ if __name__ == '__main__':
     print("Welcome to scorer.py!")
     my_answer_file = sys.argv[1]
     answer_key_file = sys.argv[2]
-    
+
     my_answer_string = ""
     answer_key_string = ""
 
     with open(my_answer_file) as file:
         file_string = file.read()
         my_answer_string = clean_text(file_string)
-    
+
 
     with open(answer_key_file) as file:
         file_string = file.read()
         answer_key_string = clean_text(file_string)
-    
+
     my_answer_sense = get_sense(my_answer_string)
     answer_key_sense = get_sense(answer_key_string)
-    
+
     confusion_stats(actual=answer_key_sense, predicted=my_answer_sense)
 
 
